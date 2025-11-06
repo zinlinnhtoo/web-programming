@@ -63,7 +63,7 @@ export function displayHeroCarousel(movies) {
  */
 export function initializeSwiper() {
   // Check if Swiper library is loaded
-  if (typeof Swiper === 'undefined') {
+  if (typeof Swiper === 'undefined') { 
     console.error('Swiper.js library is not loaded.');
     return;
   }
@@ -72,8 +72,15 @@ export function initializeSwiper() {
     direction: 'horizontal',
     loop: true,
 
+    effect: 'fade',
+
+    fadeEffect: {
+      crossFade: true
+    },
+
+
     autoplay: {
-      delay: 5000,
+      delay: 3000,
       disableOnInteraction: false,
     },
 
