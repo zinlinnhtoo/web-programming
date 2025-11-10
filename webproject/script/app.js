@@ -4,6 +4,7 @@ import {
     displayHeroCarousel,
     setupTopBarScroll,
     initializeSwiper,
+    setUpMovieScrollButton
 } from './ui.js'
 
 const state = {
@@ -17,11 +18,12 @@ async function init() {
     setupTopBarScroll();
 
     const data = await getPopularMovies(1);
-    const data2 = await getPopularMovies(2);
-    if(data && data.results && data2.results && data2) {
-        state.movies = [...data.results, ...data2.results];
+    if(data && data.results) {
+        state.movies = data.results;
         displayMovies(state.movies);
         displayHeroCarousel(state.movies);
+
+        setUpMovieScrollButton();
     } else {
         console.error("No movies found");
     }

@@ -1,15 +1,13 @@
-/* --- 1. THEME DEFINITION --- */
+/* --- THEME DEFINITION --- */
 :root {
-    /* Backgrounds */
-    --color-bg-primary: #0a192f;  /* Your main body background */
-    --color-bg-secondary: #112240; /* For headers, cards, etc. */
+    --color-bg-primary: #0a192f;  
+    --color-bg-secondary: #112240; 
 
-    /* Text */
-    --color-text-primary: #FFFFFF; /* For main text, headings */
-    --color-text-secondary: #AAAAAA; /* For placeholder text, descriptions */
+    
+    --color-text-primary: #FFFFFF; 
+    --color-text-secondary: #AAAAAA; 
 
-    /* Accent Color (The most important part!) */
-    --color-accent: #007bff; /* The blue from your old search button */
+    --color-accent: #007bff;
     --color-accent-hover: #0056b3;
 }
 
@@ -20,7 +18,6 @@
     padding: 0;
 }
 body {
-    /* Now, we USE the variables */
     background-color: var(--color-bg-primary);
     color: var(--color-text-primary);
     font-family: 'Inter', sans-serif;
@@ -28,10 +25,10 @@ body {
 
 /* --- Top Bar Styling --- */
 .top-bar {
-    position: fixed; /* Takes it out of the normal page flow */
-    top: 0;             /* Pins it to the top */
-    left: 0;            /* Stretches it to the left edge */
-    width: 100%;        /* Makes it span the full width */
+    position: fixed; 
+    top: 0;             
+    left: 0;            
+    width: 100%;       
     background-color: transparent;
     padding: 1rem 0;
     z-index: 100;
@@ -47,29 +44,21 @@ body {
 .top-bar.hidden {
     transform: translateY(-100%);
 }
-
+/* top-bar container */
 .container {
     width: 90%;
     max-width: 1200px;
     margin: 0 auto;
-    
-    /* This Flexbox layout is the same as before */
     display: flex;
     justify-content: space-between;
     align-items: center;
 }
 
-/* THE 3-COLUMN LAYOUT
-  This is the key: We tell the Left (nav) and Right (profile)
-  containers to "flex: 1", which means "grow and take up
-  1 equal share of the available space."
-*/
 .main-nav,
 .header-right {
     flex: 1;
 }
 
-/* --- 1. LEFT: Main Navigation Styling --- */
 .main-nav ul {
     list-style: none;
     display: flex;
@@ -78,7 +67,6 @@ body {
 }
 
 .main-nav li {
-    /* NEW: We use margin-right to space them out */
     margin-right: 1.5rem;
     text-align: center;
 }
@@ -95,59 +83,40 @@ body {
     color: var(--color-text-primary);
 }
 
-
-/* --- 2. CENTER: Logo Styling --- */
 .logo {
     font-size: 1.5rem;
     font-weight: bold;
     color: var(--color-text-primary);
     text-decoration: none;
-    
-    /* This still works to center the text */
     text-align: center;
 }
 
-
-/* --- 3. RIGHT: Profile Area Styling --- */
+/* profile area */
 .header-right {
     display: flex;
-    
-    /* NEW: We align these items to the END (right) */
     justify-content: flex-end;
     align-items: center;
 }
 
 .search-form {
-    position: relative; /* So we can place the icon inside */
+    position: relative;
     display: flex;
     align-items: center;
     margin-right: 1.5rem; 
-    
-    /* These lines create the "rounded dark shape" */
     border-radius: 20px;
     background-color: rgba(255, 255, 255, 0.1);
     border: 1px solid rgba(255, 255, 255, 0.2);
-    
-    /* This prevents the input from 'leaking' out */
     overflow: hidden;
 }
 
 .search-box {
-    background-color: transparent; /* Makes the white background go away */
-    border: none;                  /* Removes the default border */
-    outline: none;                 /* Removes the blue glow on click */
-    
-    /* Make the input fill its container */
+    background-color: transparent; 
+    border: none;                  
+    outline: none;                
     width: 100%;
-    
-    /* Style the text */
     color: white;
     font-size: 0.9rem;
-    
-    /* Add padding so text isn't on the edge */
     padding: 0.5rem 1rem;
-    
-    /* Add space on the right for the icon */
     padding-right: 2.5rem;
 }
 
@@ -156,7 +125,7 @@ body {
 }
 
 .profile-icon {
-    font-size: 1.25rem; /* Make the icon a good size */
+    font-size: 1.25rem; 
     color: var(--color-text-secondary);
     text-decoration: none;
     transition: color 0.2s;
@@ -166,8 +135,9 @@ body {
     color: var(--color-text-primary);
 }
 
+/* banner */
 .hero-carousel {
-    height: 80dvh; /* 70% of the viewport height */
+    height: 80dvh; 
     width: 100%;
 }
 
@@ -181,12 +151,10 @@ body {
     height: 100%;
     background-size: cover;
     background-position: center;
-
-    /* For positioning the text */
     position: relative;
     display: flex;
-    align-items: flex-end; /* Aligns text to the bottom */
-    padding: 3rem 5%; /* Padding for the text */
+    align-items: flex-end; 
+    padding: 3rem 5%;
 }
 
 .hero-carousel .swiper-slide::after {
@@ -200,13 +168,12 @@ body {
         rgba(18, 18, 18, 0) 40%, 
         rgba(18, 18, 18, 0.9) 100%
     );
-    z-index: 1; /* Behind the text */
+    z-index: 1; 
 }
 
-/* This holds the text content in each slide */
 .hero-text-content {
     position: relative;
-    z-index: 2; /* On top of the gradient */
+    z-index: 2; 
     max-width: 600px;
 }
 
@@ -230,11 +197,9 @@ body {
     text-overflow: ellipsis;
 }
 
-/* NEW: Style the Swiper Arrows & Dots
-*/
 .hero-carousel .swiper-button-prev,
 .hero-carousel .swiper-button-next {
-    color: white; /* Make arrows white */
+    color: white; 
     opacity: 0.5;
     transition: opacity 0.2s;
 }
@@ -244,18 +209,71 @@ body {
 }
 
 .hero-carousel .swiper-pagination-bullet {
-    background: rgba(255, 255, 255, 0.5); /* Make dots semi-transparent */
+    background: rgba(255, 255, 255, 0.5); 
 }
 
 .hero-carousel .swiper-pagination-bullet-active {
-    background: white; /* Make active dot white */
+    background: white; 
 }
 
-/* --- Your Movie Grid Styling --- */
+/* title for movie list */
 .section-title {
     font-size: 2rem;
     font-weight: bold;
-    margin-top: 2rem;
+    margin-top: 1rem;
     margin-bottom: 1.5rem;
-    padding-top: 80px;
+}
+
+/* movie card */
+.movie-poster {
+    border-radius: 8px;
+    transition: transform 0.3s ease;
+}
+
+.movie-poster:hover {
+    transform: scale(1.05);
+}
+
+.movie-title {
+    font-weight: 500;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.movie-rating {
+    font-size: 0.9rem;
+    color: #6c757d;
+}
+
+/* movie-list scrolling */
+#movie-list::-webkit-scrollbar {
+    scrollbar-width: none;
+    display: none;
+}
+
+.scroll-btn {
+    position: absolute;
+    border: none;
+    border-radius: 50%;
+    width: 40px;
+    height: 40px;
+    font-size: 1.5rem;
+    font-weight: bold;
+    color: #333;
+    cursor: pointer;
+    z-index: 10;
+    transition: all 0.2s ease;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+    top: 50%;
+    transform: translateY(-50%);
+    background-color: rgba(0, 0, 0, 0.5);
+}
+
+.scroll-btn-left {
+    left: 10px;
+}
+
+.scroll-btn-right {
+    right: 10px;
 }
