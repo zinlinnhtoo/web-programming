@@ -5,7 +5,7 @@ export function displayMovies(movies) {
 
   movies.forEach((movie, index) => {
     const col = document.createElement("div");
-    col.className = "col-8 col-md-3 movie";
+    col.className = "col-6 col-md-3 col-lg-2 movie";
 
     const gutterSize = 4;
     if(index === 0)
@@ -120,6 +120,13 @@ export function setUpMovieScrollButton() {
   const listContainer = document.getElementById("movie-list");
   const scrollLeftBtn = document.querySelector(".scroll-btn-left");
   const scrollRightBtn = document.querySelector(".scroll-btn-right");
+
+  if(listContainer) {
+    listContainer.addEventListener("wheel", (event) => {
+      event.preventDefault();
+      listContainer.scrollLeft += event.deltaY;
+    });
+  }
 
   if(listContainer && scrollLeftBtn && scrollRightBtn) {
     const checkScroll = () => {

@@ -220,18 +220,23 @@ body {
 .section-title {
     font-size: 2rem;
     font-weight: bold;
-    margin-top: 1rem;
-    margin-bottom: 1.5rem;
+    margin-top: 2rem;
 }
 
 /* movie card */
 .movie-poster {
     border-radius: 8px;
+}
+
+.movie {
+    display: block;
     transition: transform 0.3s ease;
 }
 
-.movie-poster:hover {
+.movie:hover {
     transform: scale(1.05);
+    z-index: 2;
+    position: relative;
 }
 
 .movie-title {
