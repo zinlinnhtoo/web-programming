@@ -18,9 +18,17 @@
     padding: 0;
 }
 body {
+    display: flex;
+    flex-direction: column;
+    min-height: 100vh;
+    margin: 0;
     background-color: var(--color-bg-primary);
     color: var(--color-text-primary);
     font-family: 'Inter', sans-serif;
+}
+
+main {
+    flex: 1;
 }
 
 /* --- Top Bar Styling --- */
@@ -294,4 +302,9 @@ body {
 
 .scroll-btn-right {
     right: 10px;
+}
+
+footer {
+    background-color: var(--color-bg-secondary);
+    z-index: 100;
 }

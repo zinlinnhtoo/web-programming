@@ -164,3 +164,30 @@ export function setUpMovieScrollButton() {
     requestAnimationFrame(checkScroll);
   }
 }
+
+export function displayMovieDetail(movie) {
+  const detailContainer = document.getElementById("movie-detail");
+  if (!detailContainer) return;
+
+  // Check if poster exists
+  const poster = movie.poster_path
+    ? `https://image.tmdb.org/t/p/w500${movie.poster_path}`
+    : "https://via.placeholder.com/500x750?text=No+Image";
+
+  // Render movie details
+  detailContainer.innerHTML = `
+    <div class="row">
+      <div class="col-md-4">
+        <img src="${poster}" class="img-fluid rounded shadow-sm" alt="${movie.title}">
+      </div>
+      <div class="col-md-8">
+        <h2>${movie.title}</h2>
+        <p><strong>Release Date:</strong> ${movie.release_date}</p>
+        <p><strong>Rating:</strong> ⭐ ${movie.vote_average}</p>
+        <p><strong>Genres:</strong> ${movie.genres.map((g) => g.name).join(", ")}</p>
+        <p><strong>Overview:</strong> ${movie.overview}</p>
+        <a href="index.html" class="btn btn-secondary mt-3">⬅ Back to Home</a>
+      </div>
+    </div>
+  `;
+}

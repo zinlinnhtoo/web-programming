@@ -7,6 +7,7 @@ const BASE_URL = "https://api.themoviedb.org/3";
  */
 
 export async function getPopularMovies(page = 1) {
+
     const API_URL = `${BASE_URL}/movie/popular?api_key=${API_KEY}&language=en-US&page=${page}`;
 
     try {
@@ -23,4 +24,21 @@ export async function getPopularMovies(page = 1) {
         return null;
     }   
 
+}
+
+export async function getMovieDetail(id) {
+
+    const API_URL = `${BASE_URL}/movie/${id}?api_key=${API_KEY}&language=en-US`;
+
+    try {
+        const response = await fetch(API_URL);
+
+        if(!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        return await response.json();
+    } catch(error) {
+        console.error("Error fetching movie details: ", error);
+        throw error;
+    }
 }
