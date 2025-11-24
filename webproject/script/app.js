@@ -19,43 +19,6 @@ const state = {
     currentMovie: null
 }
 
-// async function init() {
-
-//     console.log("App starting...");
-
-//     setupTopBarScroll();
-
-//     const urlParams = new URLSearchParams(window.location.search);
-//     const movieId = urlParams.get("id");
-
-//     if (movieId) {
-//         console.log("Loading Detail Page...");
-//         try {
-//             const movie = await getMovieDetail(movieId);
-//             state.currentMovie = movie;
-//             displayMovieDetail(movie);
-//         } catch (error) {
-//             console.error("Failed to load movie detail", error);
-//             const detailContainer = document.getElementById("movie-detail");
-//             if (detailContainer) detailContainer.innerHTML = `<p class="text-danger">Error loading movie details.</p>`;
-//         }
-
-//     } else {
-
-//         console.log("Loading Home page...");
-//         const data = await getPopularMovies(1);
-//         if (data && data.results) {
-//             state.movies = data.results;
-//             displayMovies(state.movies);
-//             displayHeroCarousel(state.movies);
-//             setUpMovieScrollButton();
-//             initializeSwiper();
-//         } else {
-//             console.error("No movies found");
-//         }
-//     }
-// }
-
 async function loadHomePage() {
     console.log("loading Home page...");
 
@@ -120,6 +83,9 @@ async function loadMovieDetailPage(movieId) {
         const movie = await getMovieDetail(movieId);
         state.currentMovie = movie;
         displayMovieDetail(movie);
+        // Wait for cast to render, then set up scroll buttons
+        await new Promise(resolve => setTimeout(resolve, 300));
+        setUpMovieScrollButton();
     } catch (error) {
         console.error("Failed to load movie detail", error);
         const detailContainer = document.getElementById("movie-detail");

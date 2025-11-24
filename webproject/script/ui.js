@@ -270,7 +270,22 @@ export function setUpMovieScrollButton() {
 
 export function displayMovieDetail(movie) {
   const detailContainer = document.getElementById("movie-detail");
+  const backdropContainer = document.getElementById("movie-backdrop");
+  const castContainer = document.getElementById("cast");
+  
   if (!detailContainer) return;
+  const allCastMembers = movie?.credits?.cast || [];
+  const castMembers = allCastMembers.slice(0, 10);
+  const hasMoreCast = allCastMembers.length > 10;
+
+  // Set backdrop image if available
+  if (backdropContainer && movie.backdrop_path) {
+    const backdropUrl = `https://image.tmdb.org/t/p/original${movie.backdrop_path}`;
+    backdropContainer.style.backgroundImage = `url('${backdropUrl}')`;
+  } else if (backdropContainer) {
+    // Fallback if no backdrop
+    backdropContainer.style.backgroundImage = `linear-gradient(135deg, var(--color-bg-primary) 0%, var(--color-bg-secondary) 100%)`;
+  }
 
   // Check if poster exists
   const poster = movie.poster_path
@@ -285,12 +300,59 @@ export function displayMovieDetail(movie) {
       </div>
       <div class="col-md-8">
         <h2>${movie.title}</h2>
-        <p><strong>Release Date:</strong> ${movie.release_date}</p>
-        <p><strong>Rating:</strong> ⭐ ${movie.vote_average}</p>
-        <p><strong>Genres:</strong> ${movie.genres.map((g) => g.name).join(", ")}</p>
-        <p><strong>Overview:</strong> ${movie.overview}</p>
-        <a href="index.html" class="btn btn-secondary mt-3">⬅ Back to Home</a>
+        <p>${movie.release_date} &bull; ⭐ ${movie.vote_average}</p>
+        <p>${movie.genres.map((g) => g.name).join(", ")}</p>
+        <p>${movie.overview}</p>
       </div>
     </div>
   `;
+
+  if (!castContainer) return;
+
+  castContainer.innerHTML = "";
+
+  if (!castMembers.length) {
+    castContainer.innerHTML = `<p class="text-muted">Cast information is not available.</p>`;
+    return;
+  }
+
+  castMembers.forEach((member, index) => {
+    const col = document.createElement("div");
+    col.className = "cast-card-item";
+
+    const gutterSize = 2;
+    if (index === 0) col.classList.add(`ms-${gutterSize}`);
+    if (index === castMembers.length - 1 && !hasMoreCast) col.classList.add(`me-${gutterSize}`);
+
+    const avatar = member.profile_path
+      ? `https://image.tmdb.org/t/p/w185${member.profile_path}`
+      : "https://via.placeholder.com/138x175?text=No+Image";
+    const character = member.character || "Unknown role";
+    
+    col.innerHTML = `
+      <div class="cast-card-body">
+        <img src="${avatar}" 
+             class="cast-card-poster" 
+             alt="${member.name}">
+        <div class="cast-card-info">
+          <h6 class="cast-card-title">${member.name}</h6>
+          <p class="cast-card-role">${character}</p>
+        </div> 
+      </div>
+    `;
+
+    castContainer.appendChild(col);
+  });
+
+  // Add "View More" link if there are more cast members
+  if (hasMoreCast) {
+    const viewMoreCol = document.createElement("div");
+    viewMoreCol.className = "cast-card-item cast-view-more";
+    viewMoreCol.innerHTML = `
+      <div class="cast-card-body cast-view-more-body">
+        <a href="#" class="cast-view-more-link">View More →</a>
+      </div>
+    `;
+    castContainer.appendChild(viewMoreCol);
+  }
 }

@@ -59,8 +59,8 @@ export async function getUpcomingMovies(page = 1) {
 }
 
 export async function getMovieDetail(id) {
-
-    const API_URL = `${BASE_URL}/movie/${id}?api_key=${API_KEY}&language=en-US`;
+    // Append credits so we can show cast info on the detail page
+    const API_URL = `${BASE_URL}/movie/${id}?api_key=${API_KEY}&language=en-US&append_to_response=credits`;
 
     try {
         const response = await fetch(API_URL);
