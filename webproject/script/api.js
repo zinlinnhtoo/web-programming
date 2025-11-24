@@ -26,6 +26,38 @@ export async function getPopularMovies(page = 1) {
 
 }
 
+export async function getTopRatedMovies(page = 1) {
+    // Note: The only change is the URL path from /popular to /top_rated
+    const API_URL = `${BASE_URL}/movie/top_rated?api_key=${API_KEY}&language=en-US&page=${page}`;
+    try {
+        const response = await fetch(API_URL);
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        const data = await response.json();
+        return data;
+    } catch (error) {
+        console.error("Error fetching top rated movies:", error);
+        return null;
+    }
+}
+
+export async function getUpcomingMovies(page = 1) {
+    // Note: The only change is the URL path from /popular to /top_rated
+    const API_URL = `${BASE_URL}/movie/upcoming?api_key=${API_KEY}&language=en-US&page=${page}`;
+    try {
+        const response = await fetch(API_URL);
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        const data = await response.json();
+        return data;
+    } catch (error) {
+        console.error("Error fetching top rated movies:", error);
+        return null;
+    }
+}
+
 export async function getMovieDetail(id) {
 
     const API_URL = `${BASE_URL}/movie/${id}?api_key=${API_KEY}&language=en-US`;

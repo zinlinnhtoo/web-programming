@@ -15,30 +15,23 @@
 <body>
     
     <header class="top-bar">
-
         <div class="container">
-
             <nav class="main-nav">
                 <ul>
-                    <li><a href="#">New</a></li>
-                    <li><a href="#">Popular</a></li>
-                    <li><a href="#">Trending</a></li>
+                    <li><a href="#popular-section" class="nav-link">Popular</a></li>
+                    <li><a href="#top-rated-section" class="nav-link">Top-rated</a></li>
+                    <li><a href="#upcoming-section" class="nav-link">Upcoming</a></li>
                 </ul>
             </nav>
-
             <a href="index.html" class="logo">Z Movie</a>
-
-            <div class="header-right">
-                
+            <div class="header-right">        
                 <form class="search-form" action="/search">
                     <input type="text" class="search-box" placeholder="Search movies...">
                 </form>
-                <a href="#" class="profile-icon">
-                    
+                <a href="#" class="profile-icon">                    
                     <i class="fa-solid fa-user"></i>
                 </a>
             </div>
-
         </div>
     </header>
 
@@ -53,17 +46,49 @@
         </section>
 
         
-        <div class="container section-title">
-            <h4>Popular Movies</h4>
-        </div>
-        
-        <div class="container-fluid px-0 overflow-hidden">
-            <div class="movie-list-wrapper position-relative">
-                <div class="row g-3 py-3 flex-nowrap overflow-auto" id="movie-list"></div>
-                <button class="scroll-btn scroll-btn-left">&lt;</button>
-                <button class="scroll-btn scroll-btn-right">&gt;</button>
+        <div class="movie-viewport" id="popular-section">
+            <div class="container section-title">
+                <h4>Popular Movies</h4>
+            </div>
+            
+            <div class="container-fluid px-0 overflow-hidden">
+                <div class="movie-list-wrapper position-relative">
+                    <div class="row g-3 py-3 flex-nowrap overflow-auto" id="popular-movie-list"></div>
+                    <button type="button" class="scroll-btn scroll-btn-left">&lt;</button>
+                    <button type="button" class="scroll-btn scroll-btn-right">&gt;</button>
+                </div>
             </div>
         </div>
+
+        <div class="movie-viewport" id="top-rated-section">
+            <div class="container section-title">
+                <h4>Top-rated Movies</h4>
+            </div>
+            
+            <div class="container-fluid px-0 overflow-hidden">
+                <div class="movie-list-wrapper position-relative">
+                    <div class="row g-3 py-3 flex-nowrap overflow-auto" id="top-rated-movie-list"></div>
+                    <button type="button" class="scroll-btn scroll-btn-left">&lt;</button>
+                    <button type="button" class="scroll-btn scroll-btn-right">&gt;</button>
+                </div>
+            </div>
+        </div>
+
+        <div class="movie-viewport" id="upcoming-section">
+            <div class="container section-title">
+                <h4>Upcoming Moives</h4>
+            </div>
+            
+            <div class="container-fluid px-0 overflow-hidden">
+                <div class="movie-list-wrapper position-relative">
+                    <div class="row g-3 py-3 flex-nowrap overflow-auto" id="upcoming-movie-list"></div>
+                    <button type="button" class="scroll-btn scroll-btn-left">&lt;</button>
+                    <button type="button" class="scroll-btn scroll-btn-right">&gt;</button>
+                </div>
+            </div>
+        </div>
+
+    
 
         <footer class="text-white text-center py-3 mt-5">
             <p>© 2025 ZMovie | Powered by Bootstrap</p>

@@ -272,28 +272,55 @@ main {
     color: #6c757d;
 }
 
-/* movie-list scrolling */
-#movie-list::-webkit-scrollbar {
-    scrollbar-width: none;
+/* movie-list scrolling - hide scrollbars */
+.movie-list-wrapper .row.overflow-auto::-webkit-scrollbar {
     display: none;
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+}
+
+.movie-list-wrapper .row.overflow-auto {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+}
+
+.movie-list-wrapper {
+    overflow: hidden;
 }
 
 .scroll-btn {
-    position: absolute;
+    position: absolute !important;
     border: none;
     border-radius: 50%;
     width: 40px;
     height: 40px;
     font-size: 1.5rem;
     font-weight: bold;
-    color: #333;
-    cursor: pointer;
-    z-index: 10;
+    color: #ffffff;
+    cursor: pointer !important;
+    z-index: 1000 !important;
     transition: all 0.2s ease;
-    box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+    box-shadow: 0 2px 8px rgba(0,0,0,0.5);
     top: 50%;
     transform: translateY(-50%);
-    background-color: rgba(0, 0, 0, 0.5);
+    background-color: rgba(255, 255, 255, 0.2);
+    backdrop-filter: blur(5px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    user-select: none;
+    -webkit-user-select: none;
+    pointer-events: auto !important;
+    touch-action: manipulation;
+}
+
+.scroll-btn:hover {
+    background-color: rgba(255, 255, 255, 0.3);
+    transform: translateY(-50%) scale(1.1);
+}
+
+.scroll-btn:active {
+    transform: translateY(-50%) scale(0.95);
 }
 
 .scroll-btn-left {
@@ -307,4 +334,8 @@ main {
 footer {
     background-color: var(--color-bg-secondary);
     z-index: 100;
+}
+
+.gg {
+    height: 1000px;
 }

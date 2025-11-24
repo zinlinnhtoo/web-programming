@@ -1,5 +1,10 @@
-export function displayMovies(movies) {
-  const movieList = document.getElementById("movie-list");
+export function displayMovies(movies, targetId) {
+  const movieList = document.getElementById(targetId);
+
+  if (!movieList) {
+    console.error(`Error: Element with ID "${targetId}" not found.`);
+    return;
+  }
 
   movieList.innerHTML = "";
 
@@ -61,13 +66,27 @@ export function displayHeroCarousel(movies) {
 }
 
 //initializer for swiper
+let swiperInstance = null;
+
 export function initializeSwiper() {
   if (typeof Swiper === 'undefined') { 
     console.error('Swiper.js library is not loaded.');
     return;
   }
 
-  new Swiper('.hero-carousel .swiper', {
+  const swiperWrapper = document.querySelector('.hero-carousel .swiper-wrapper');
+  if (!swiperWrapper || swiperWrapper.children.length === 0) {
+    console.warn('Swiper: No slides found, cannot initialize.');
+    return;
+  }
+
+  // Destroy existing instance if any
+  if (swiperInstance) {
+    swiperInstance.destroy(true, true);
+    swiperInstance = null;
+  }
+
+  swiperInstance = new Swiper('.hero-carousel .swiper', {
     direction: 'horizontal',
     loop: true,
     effect: 'fade',
@@ -117,52 +136,136 @@ export function setupTopBarScroll() {
 
 // left-right buttton on movie list 
 export function setUpMovieScrollButton() {
-  const listContainer = document.getElementById("movie-list");
-  const scrollLeftBtn = document.querySelector(".scroll-btn-left");
-  const scrollRightBtn = document.querySelector(".scroll-btn-right");
+  // Wait a bit longer to ensure movies are fully rendered
+  setTimeout(() => {
+    // Find all movie list wrapper sections
+    const movieListWrappers = document.querySelectorAll(".movie-list-wrapper");
 
-  if(listContainer) {
-    listContainer.addEventListener("wheel", (event) => {
-      event.preventDefault();
-      listContainer.scrollLeft += event.deltaY;
-    });
-  }
+    if (movieListWrappers.length === 0) {
+      console.warn("No movie list wrappers found");
+      return;
+    }
 
-  if(listContainer && scrollLeftBtn && scrollRightBtn) {
-    const checkScroll = () => {
-      if(listContainer.scrollLeft === 0) {
-        scrollLeftBtn.style.display = 'none';
-      } else {
-        scrollLeftBtn.style.display = 'block';
+
+    movieListWrappers.forEach((wrapper, index) => {
+      // Find the list container - the row div with overflow-auto
+      const listContainer = wrapper.querySelector(".row.overflow-auto");
+      
+      if (!listContainer) {
+        console.warn(`List container not found in wrapper ${index}`);
+        return;
       }
-      const maxScrollLeft = listContainer.scrollWidth - listContainer.clientWidth;
-      if (listContainer.scrollLeft >= maxScrollLeft - 1) {
-        scrollRightBtn.style.display = 'none';
-      } else {
-        scrollRightBtn.style.display = 'block';
+
+      const scrollLeftBtn = wrapper.querySelector(".scroll-btn-left");
+      const scrollRightBtn = wrapper.querySelector(".scroll-btn-right");
+
+      if (!scrollLeftBtn || !scrollRightBtn) {
+        console.warn(`Scroll buttons not found in wrapper ${index}`);
+        return;
       }
-    };
 
-    scrollRightBtn.addEventListener("click", () => {
-      const scrollAmount = listContainer.clientWidth * 0.75;
-      listContainer.scrollBy({
-        left: scrollAmount,
-        behavior: "smooth"
+
+      // Ensure buttons are visible and clickable - set all styles explicitly
+      scrollLeftBtn.style.cssText = 'display: flex !important; pointer-events: auto !important; z-index: 1000 !important; position: absolute !important; cursor: pointer !important;';
+      scrollRightBtn.style.cssText = 'display: flex !important; pointer-events: auto !important; z-index: 1000 !important; position: absolute !important; cursor: pointer !important;';
+      
+      // Test if buttons are clickable
+      scrollRightBtn.style.backgroundColor = 'rgba(255, 255, 255, 0.3)';
+      scrollLeftBtn.style.backgroundColor = 'rgba(255, 255, 255, 0.3)';
+
+      // Add wheel scroll support - handle both vertical and horizontal scrolling (touchpad support)
+      listContainer.addEventListener("wheel", (event) => {
+        // Check if there's horizontal scroll (deltaX) - touchpad horizontal scrolling
+        if (Math.abs(event.deltaX) > Math.abs(event.deltaY)) {
+          // Horizontal scroll - allow native behavior for horizontal scrolling
+          return;
+        } else {
+          // Vertical scroll - convert to horizontal scroll
+          event.preventDefault();
+          listContainer.scrollLeft += event.deltaY;
+        }
+      }, { passive: false });
+
+      // Function to check scroll position and show/hide buttons
+      const updateButtonVisibility = () => {
+        const maxScrollLeft = listContainer.scrollWidth - listContainer.clientWidth;
+        const hasScrollableContent = maxScrollLeft > 10;
+        
+        // Only hide left button if at the start
+        if (listContainer.scrollLeft <= 10 || !hasScrollableContent) {
+          scrollLeftBtn.style.display = 'none';
+        } else {
+          scrollLeftBtn.style.display = 'flex';
+        }
+        
+        // Only hide right button if at the end or no scrollable content
+        if (!hasScrollableContent || listContainer.scrollLeft >= maxScrollLeft - 10) {
+          scrollRightBtn.style.display = 'none';
+        } else {
+          scrollRightBtn.style.display = 'flex';
+        }
+      };
+
+      // Right button click handler - use addEventListener with capture
+      const rightHandler = (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        
+        // Reduced scroll amount for smoother scrolling (about 40% of container width or 250px, whichever is smaller)
+        const scrollAmount = Math.min(listContainer.clientWidth * 0.4, 250);
+        listContainer.scrollBy({
+          left: scrollAmount,
+          behavior: "smooth"
+        });
+        
+        // Update visibility after scroll
+        setTimeout(updateButtonVisibility, 200);
+        return false;
+      };
+
+      // Left button click handler - use addEventListener with capture
+      const leftHandler = (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        
+        // Reduced scroll amount for smoother scrolling (about 40% of container width or 250px, whichever is smaller)
+        const scrollAmount = Math.min(listContainer.clientWidth * 0.4, 250);
+        listContainer.scrollBy({
+          left: -scrollAmount,
+          behavior: "smooth"
+        });
+        
+        // Update visibility after scroll
+        setTimeout(updateButtonVisibility, 200);
+        return false;
+      };
+
+      // Attach event listeners - use capture phase to catch early
+      scrollRightBtn.addEventListener("click", rightHandler, true);
+      scrollLeftBtn.addEventListener("click", leftHandler, true);
+      
+      // Also attach mouseup as backup
+      scrollRightBtn.addEventListener("mousedown", (e) => {
+        e.preventDefault();
+        rightHandler(e);
       });
-    });
-
-    scrollLeftBtn.addEventListener("click", () => {
-      const scrollAmount = listContainer.clientWidth * 0.75;
-      listContainer.scrollBy({
-        left: -scrollAmount,
-        behavior: "smooth"
+      scrollLeftBtn.addEventListener("mousedown", (e) => {
+        e.preventDefault();
+        leftHandler(e);
       });
-    });
 
-    listContainer.addEventListener("scroll", checkScroll);
-    window.addEventListener("resize", checkScroll);
-    requestAnimationFrame(checkScroll);
-  }
+      // Add scroll listener
+      listContainer.addEventListener("scroll", updateButtonVisibility, { passive: true });
+
+      // Add resize listener
+      window.addEventListener("resize", updateButtonVisibility);
+      
+      // Initial check after content loads
+      setTimeout(() => {
+        updateButtonVisibility();
+      }, 150);
+    });
+  }, 300);
 }
 
 export function displayMovieDetail(movie) {
