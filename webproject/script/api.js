@@ -74,3 +74,21 @@ export async function getMovieDetail(id) {
         throw error;
     }
 }
+
+export async function searchMovies(query, page = 1) {
+    const API_URL = `${BASE_URL}/search/movie?include_adult=false&language=en-US&page=${page}&api_key=${API_KEY}&query=${encodeURIComponent(query)}`;
+
+    try {
+        const response = await fetch(API_URL);
+
+        if(!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
+
+        const data = await response.json();
+        return data;
+    } catch(error) {
+        console.error("Error searching movies: ", error);
+        return null;
+    }
+}

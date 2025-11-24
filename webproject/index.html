@@ -25,9 +25,18 @@
             </nav>
             <a href="index.html" class="logo">Z Movie</a>
             <div class="header-right">        
-                <form class="search-form" action="/search">
-                    <input type="text" class="search-box" placeholder="Search movies...">
-                </form>
+                <div class="search-wrapper">
+                    <form class="search-form" id="search-form">
+                        <i class="fa-solid fa-magnifying-glass search-icon"></i>
+                        <input type="text" class="search-box" id="search-input" placeholder="Search..." autocomplete="off">
+                    </form>
+                    <div class="search-results-dropdown" id="search-results-dropdown" style="display: none;">
+                        <div class="search-results-list" id="search-results-list"></div>
+                        <div class="search-results-footer" id="search-results-footer" style="display: none;">
+                            <a href="#" class="show-all-results-link" id="show-all-results-link">Show all results →</a>
+                        </div>
+                    </div>
+                </div>
                 <a href="#" class="profile-icon">                    
                     <i class="fa-solid fa-user"></i>
                 </a>
@@ -88,7 +97,20 @@
             </div>
         </div>
 
-    
+        <!-- Search Results Section -->
+        <div class="movie-viewport" id="search-results-section" style="display: none;">
+            <div class="container section-title">
+                <h4 id="search-results-title">Search Results</h4>
+            </div>
+            
+            <div class="container-fluid px-0 overflow-hidden">
+                <div class="movie-list-wrapper position-relative">
+                    <div class="row g-3 py-3 flex-nowrap overflow-auto" id="search-results-list"></div>
+                    <button type="button" class="scroll-btn scroll-btn-left">&lt;</button>
+                    <button type="button" class="scroll-btn scroll-btn-right">&gt;</button>
+                </div>
+            </div>
+        </div>
 
         <footer class="text-white text-center py-3 mt-5">
             <p>© 2025 ZMovie | Powered by Bootstrap</p>

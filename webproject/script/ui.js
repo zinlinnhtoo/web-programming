@@ -36,6 +36,58 @@ export function displayMovies(movies, targetId) {
   });
 }
 
+export function displaySearchResults(movies, targetId, showAllLink = false) {
+  const resultsList = document.getElementById(targetId);
+
+  if (!resultsList) {
+    console.error(`Error: Element with ID "${targetId}" not found.`);
+    return;
+  }
+
+  resultsList.innerHTML = "";
+
+  // Show only first 5 results in dropdown, rest will be in "show all"
+  const displayMovies = movies.slice(0, 5);
+
+  displayMovies.forEach((movie) => {
+    const resultItem = document.createElement("a");
+    resultItem.href = `detail.html?id=${movie.id}`;
+    resultItem.className = "search-result-item";
+    
+    const poster = movie.poster_path
+      ? `https://image.tmdb.org/t/p/w92${movie.poster_path}`
+      : "https://via.placeholder.com/92x138?text=No+Image";
+    
+    const releaseYear = movie.release_date 
+      ? new Date(movie.release_date).getFullYear() 
+      : "N/A";
+
+    resultItem.innerHTML = `
+      <img src="${poster}" 
+           class="search-result-poster" 
+           alt="${movie.title}"
+           onerror="this.src='https://via.placeholder.com/92x138?text=No+Image'">
+      <div class="search-result-info">
+        <h6 class="search-result-title">${movie.title}</h6>
+        <div class="search-result-meta">
+          <span class="search-result-type">Movie</span>
+          <span class="search-result-year">${releaseYear}</span>
+        </div>
+      </div>
+    `;
+
+    resultsList.appendChild(resultItem);
+  });
+
+  // Show "Show all results" link if there are more than 5 results
+  const footer = document.getElementById("search-results-footer");
+  if (footer && movies.length > 5 && showAllLink) {
+    footer.style.display = "block";
+  } else if (footer) {
+    footer.style.display = "none";
+  }
+}
+
 
 
 export function displayHeroCarousel(movies) {
