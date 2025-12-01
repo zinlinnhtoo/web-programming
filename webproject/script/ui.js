@@ -1,4 +1,4 @@
-export function displayMovies(movies, targetId) {
+export function displayMovies(movies, targetId, options = {}) {
   const movieList = document.getElementById(targetId);
 
   if (!movieList) {
@@ -7,6 +7,11 @@ export function displayMovies(movies, targetId) {
   }
 
   movieList.innerHTML = "";
+
+  const {
+    favorites = new Set(),
+    isAuthenticated = false,
+  } = options;
 
   movies.forEach((movie, index) => {
     const col = document.createElement("div");
@@ -18,6 +23,12 @@ export function displayMovies(movies, targetId) {
     if(index === movies.length - 1)
       col.classList.add(`me-${gutterSize}`);
 
+    const rating = typeof movie.vote_average === "number"
+      ? movie.vote_average.toFixed(1)
+      : "N/A";
+
+    const isFavorite = favorites.has(movie.id);
+
     col.innerHTML = `
     <a href="detail.html?id=${movie.id}" style="text-decoration: none; color: inherit;">
       <div>
@@ -26,7 +37,19 @@ export function displayMovies(movies, targetId) {
              alt="${movie.title}">
         <div class="pt-2">
           <h6 class="card-title movie-title text-truncate">${movie.title}</h6>
-          <p class="card-text movie-rating">⭐ Rating: ${movie.vote_average}</p>
+          <p class="card-text movie-rating">
+            ⭐ Rating: ${rating}
+            <button
+              type="button"
+              class="favorite-btn ${isFavorite ? "active" : ""}"
+              data-favorite-btn="true"
+              data-movie-id="${movie.id}"
+              ${isAuthenticated ? "" : 'data-requires-auth="true"'}
+              aria-label="${isFavorite ? "Remove from favorites" : "Add to favorites"}"
+            >
+              ${isFavorite ? "♥" : "♡"}
+            </button>
+          </p>
         </div> 
       </div>
     </a>
@@ -344,6 +367,11 @@ export function displayMovieDetail(movie) {
     ? `https://image.tmdb.org/t/p/w500${movie.poster_path}`
     : "https://via.placeholder.com/500x750?text=No+Image";
 
+  // Prepare rating with 1 decimal place
+  const rating = typeof movie.vote_average === "number"
+    ? movie.vote_average.toFixed(1)
+    : "N/A";
+
   // Render movie details
   detailContainer.innerHTML = `
     <div class="row">
@@ -352,7 +380,18 @@ export function displayMovieDetail(movie) {
       </div>
       <div class="col-md-8">
         <h2>${movie.title}</h2>
-        <p>${movie.release_date} &bull; ⭐ ${movie.vote_average}</p>
+        <p>
+          ${movie.release_date} &bull; ⭐ ${rating}
+          <button
+            type="button"
+            class="favorite-btn"
+            data-favorite-btn="true"
+            data-movie-id="${movie.id}"
+            aria-label="Add to favorites"
+          >
+            ♡
+          </button>
+        </p>
         <p>${movie.genres.map((g) => g.name).join(", ")}</p>
         <p>${movie.overview}</p>
       </div>

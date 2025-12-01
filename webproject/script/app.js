@@ -3,7 +3,11 @@ import {
     getTopRatedMovies,
     getUpcomingMovies,
     getMovieDetail,
-    searchMovies
+    searchMovies,
+    createRequestToken,
+    createSession,
+    getAccountDetails,
+    markAsFavorite
 } from './api.js';
 
 import {
@@ -18,9 +22,231 @@ import {
 
 const state = {
     movies: [],
+    topRatedMovies: [],
+    upcomingMovies: [],
     currentMovie: null,
     isSearchMode: false,
-    searchQuery: ''
+    searchQuery: '',
+    auth: {
+        sessionId: null,
+        accountId: null,
+        isAuthenticated: false,
+    },
+    favorites: new Set(),
+}
+
+const AUTH_STORAGE_KEY = 'zmovie_auth';
+const FAVORITES_STORAGE_KEY = 'zmovie_favorites';
+
+function loadAuthFromStorage() {
+    try {
+        const raw = localStorage.getItem(AUTH_STORAGE_KEY);
+        if (!raw) return;
+        const parsed = JSON.parse(raw);
+        if (parsed && parsed.sessionId && parsed.accountId) {
+            state.auth.sessionId = parsed.sessionId;
+            state.auth.accountId = parsed.accountId;
+            state.auth.isAuthenticated = true;
+        }
+    } catch (e) {
+        console.error('Failed to load auth from storage', e);
+    }
+}
+
+function saveAuthToStorage() {
+    try {
+        const data = {
+            sessionId: state.auth.sessionId,
+            accountId: state.auth.accountId,
+        };
+        localStorage.setItem(AUTH_STORAGE_KEY, JSON.stringify(data));
+    } catch (e) {
+        console.error('Failed to save auth to storage', e);
+    }
+}
+
+function clearAuthStorage() {
+    try {
+        localStorage.removeItem(AUTH_STORAGE_KEY);
+    } catch (e) {
+        console.error('Failed to clear auth from storage', e);
+    }
+}
+
+function loadFavoritesFromStorage() {
+    try {
+        const raw = localStorage.getItem(FAVORITES_STORAGE_KEY);
+        if (!raw) return;
+        const parsed = JSON.parse(raw);
+        if (Array.isArray(parsed)) {
+            state.favorites = new Set(parsed);
+        }
+    } catch (e) {
+        console.error('Failed to load favorites from storage', e);
+    }
+}
+
+function saveFavoritesToStorage() {
+    try {
+        const arr = Array.from(state.favorites);
+        localStorage.setItem(FAVORITES_STORAGE_KEY, JSON.stringify(arr));
+    } catch (e) {
+        console.error('Failed to save favorites to storage', e);
+    }
+}
+
+function updateAuthUI() {
+    const loginBtn = document.getElementById('login-button');
+    const logoutBtn = document.getElementById('logout-button');
+
+    if (!loginBtn || !logoutBtn) return;
+
+    if (state.auth.isAuthenticated) {
+        loginBtn.style.display = 'none';
+        logoutBtn.style.display = 'inline-flex';
+    } else {
+        loginBtn.style.display = 'inline-flex';
+        logoutBtn.style.display = 'none';
+    }
+}
+
+async function handleAuthCallback() {
+    const params = new URLSearchParams(window.location.search);
+    const requestToken = params.get('request_token');
+    const approved = params.get('approved');
+
+    if (!requestToken || approved !== 'true') {
+        return;
+    }
+
+    try {
+        const sessionData = await createSession(requestToken);
+        const sessionId = sessionData.session_id;
+        const account = await getAccountDetails(sessionId);
+
+        state.auth.sessionId = sessionId;
+        state.auth.accountId = account.id;
+        state.auth.isAuthenticated = true;
+        saveAuthToStorage();
+
+        // Clean up URL
+        params.delete('request_token');
+        params.delete('approved');
+        const newQuery = params.toString();
+        const newUrl = window.location.pathname + (newQuery ? `?${newQuery}` : '');
+        window.history.replaceState({}, '', newUrl);
+    } catch (error) {
+        console.error('Error handling auth callback:', error);
+    }
+}
+
+async function handleLogin() {
+    try {
+        const data = await createRequestToken();
+        const requestToken = data.request_token;
+        const redirectTo = encodeURIComponent(window.location.href);
+        const authUrl = `https://www.themoviedb.org/authenticate/${requestToken}?redirect_to=${redirectTo}`;
+        window.location.href = authUrl;
+    } catch (error) {
+        console.error('Login failed:', error);
+        alert('Could not start TMDB login. Please try again.');
+    }
+}
+
+function handleLogout() {
+    state.auth.sessionId = null;
+    state.auth.accountId = null;
+    state.auth.isAuthenticated = false;
+    state.favorites.clear();
+    clearAuthStorage();
+    saveFavoritesToStorage();
+    updateAuthUI();
+    // Reload to clear favorite UI state
+    window.location.reload();
+}
+
+function setupAuth() {
+    loadAuthFromStorage();
+    loadFavoritesFromStorage();
+    updateAuthUI();
+
+    const loginBtn = document.getElementById('login-button');
+    const logoutBtn = document.getElementById('logout-button');
+
+    if (loginBtn) {
+        loginBtn.addEventListener('click', (e) => {
+            e.preventDefault();
+            handleLogin();
+        });
+    }
+
+    if (logoutBtn) {
+        logoutBtn.addEventListener('click', (e) => {
+            e.preventDefault();
+            handleLogout();
+        });
+    }
+}
+
+function updateFavoriteButtonsForMovie(movieId, isFavorite) {
+    const selector = `[data-favorite-btn="true"][data-movie-id="${movieId}"]`;
+    const buttons = document.querySelectorAll(selector);
+
+    buttons.forEach((btn) => {
+        if (isFavorite) {
+            btn.classList.add('active');
+            btn.textContent = '♥';
+            btn.setAttribute('aria-label', 'Remove from favorites');
+        } else {
+            btn.classList.remove('active');
+            btn.textContent = '♡';
+            btn.setAttribute('aria-label', 'Add to favorites');
+        }
+    });
+}
+
+function setupFavoriteHandlers() {
+    document.body.addEventListener('click', async (event) => {
+        const target = event.target;
+        if (!(target instanceof HTMLElement)) return;
+
+        const button = target.closest('[data-favorite-btn="true"]');
+        if (!button) return;
+
+        const movieIdStr = button.getAttribute('data-movie-id');
+        if (!movieIdStr) return;
+        const movieId = Number(movieIdStr);
+        if (!Number.isFinite(movieId)) return;
+
+        if (!state.auth.isAuthenticated) {
+            alert('Please login with your TMDB account to use favorites.');
+            return;
+        }
+
+        const currentlyFavorite = state.favorites.has(movieId);
+        const newFavoriteValue = !currentlyFavorite;
+
+        try {
+            await markAsFavorite(
+                state.auth.accountId,
+                state.auth.sessionId,
+                movieId,
+                newFavoriteValue
+            );
+
+            if (newFavoriteValue) {
+                state.favorites.add(movieId);
+            } else {
+                state.favorites.delete(movieId);
+            }
+
+            saveFavoritesToStorage();
+            updateFavoriteButtonsForMovie(movieId, newFavoriteValue);
+        } catch (error) {
+            console.error('Failed to update favorite:', error);
+            alert('Could not update favorite on TMDB. Please try again.');
+        }
+    });
 }
 
 async function loadHomePage() {
@@ -31,7 +257,10 @@ async function loadHomePage() {
         const popularMovies = await getPopularMovies(1);
         if (popularMovies && popularMovies.results) {
             state.movies = popularMovies.results;
-            displayMovies(state.movies, "popular-movie-list");
+            displayMovies(state.movies, "popular-movie-list", {
+                favorites: state.favorites,
+                isAuthenticated: state.auth.isAuthenticated,
+            });
             displayHeroCarousel(state.movies);
             initializeSwiper();
         } else {
@@ -49,7 +278,11 @@ async function loadHomePage() {
     try {
         const topRatedMovies = await getTopRatedMovies(1);
         if (topRatedMovies && topRatedMovies.results) {
-            displayMovies(topRatedMovies.results, "top-rated-movie-list");
+            state.topRatedMovies = topRatedMovies.results;
+            displayMovies(state.topRatedMovies, "top-rated-movie-list", {
+                favorites: state.favorites,
+                isAuthenticated: state.auth.isAuthenticated,
+            });
         } else {
             console.error("No top rated movies found");
         }
@@ -65,7 +298,11 @@ async function loadHomePage() {
     try {
         const upcomingMovies = await getUpcomingMovies(1);
         if (upcomingMovies && upcomingMovies.results) {
-            displayMovies(upcomingMovies.results, "upcoming-movie-list");
+            state.upcomingMovies = upcomingMovies.results;
+            displayMovies(state.upcomingMovies, "upcoming-movie-list", {
+                favorites: state.favorites,
+                isAuthenticated: state.auth.isAuthenticated,
+            });
         } else {
             console.error("No upcoming movies found");
         }
@@ -332,15 +569,18 @@ async function handleFullSearch(query) {
     }
 }
 
-document.addEventListener("DOMContentLoaded", () => {
-
+document.addEventListener("DOMContentLoaded", async () => {
     setupTopBarScroll();
+
+    await handleAuthCallback();
+    setupAuth();
+    setupFavoriteHandlers();
 
     const path = window.location.pathname;
     const params = new URLSearchParams(window.location.search);
     const movieId = params.get("id");
 
-    if(path.includes('detail.html') && params.has('id')) {
+    if (path.includes('detail.html') && params.has('id')) {
         loadMovieDetailPage(movieId);
     } else {
         loadHomePage();

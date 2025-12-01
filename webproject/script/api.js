@@ -92,3 +92,101 @@ export async function searchMovies(query, page = 1) {
         return null;
     }
 }
+
+// --- Authentication & Favorites ---
+
+export async function createRequestToken() {
+    const API_URL = `${BASE_URL}/authentication/token/new?api_key=${API_KEY}`;
+
+    try {
+        const response = await fetch(API_URL);
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        const data = await response.json();
+        if (!data.success) {
+            throw new Error("Failed to create request token");
+        }
+        return data; // { success, expires_at, request_token }
+    } catch (error) {
+        console.error("Error creating request token:", error);
+        throw error;
+    }
+}
+
+export async function createSession(requestToken) {
+    const API_URL = `${BASE_URL}/authentication/session/new?api_key=${API_KEY}`;
+
+    try {
+        const response = await fetch(API_URL, {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json;charset=utf-8"
+            },
+            body: JSON.stringify({ request_token: requestToken })
+        });
+
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
+
+        const data = await response.json();
+        if (!data.success || !data.session_id) {
+            throw new Error("Failed to create session");
+        }
+
+        return data; // { success, session_id }
+    } catch (error) {
+        console.error("Error creating session:", error);
+        throw error;
+    }
+}
+
+export async function getAccountDetails(sessionId) {
+    const API_URL = `${BASE_URL}/account?api_key=${API_KEY}&session_id=${sessionId}`;
+
+    try {
+        const response = await fetch(API_URL);
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
+
+        const data = await response.json();
+        return data; // includes "id" (account id)
+    } catch (error) {
+        console.error("Error fetching account details:", error);
+        throw error;
+    }
+}
+
+export async function markAsFavorite(accountId, sessionId, movieId, favorite) {
+    const API_URL = `${BASE_URL}/account/${accountId}/favorite?api_key=${API_KEY}&session_id=${sessionId}`;
+
+    try {
+        const response = await fetch(API_URL, {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json;charset=utf-8"
+            },
+            body: JSON.stringify({
+                media_type: "movie",
+                media_id: movieId,
+                favorite: !!favorite
+            })
+        });
+
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
+
+        const data = await response.json();
+        if (!data.success) {
+            throw new Error("Failed to update favorite on TMDB");
+        }
+
+        return data;
+    } catch (error) {
+        console.error("Error marking movie as favorite:", error);
+        throw error;
+    }
+}
