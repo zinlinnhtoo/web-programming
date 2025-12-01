@@ -190,3 +190,20 @@ export async function markAsFavorite(accountId, sessionId, movieId, favorite) {
         throw error;
     }
 }
+
+export async function getFavorites(accountId, sessionId, page = 1) {
+    const API_URL = `${BASE_URL}/account/${accountId}/favorite/movies?api_key=${API_KEY}&session_id=${sessionId}&language=en-US&page=${page}&sort_by=created_at.desc`;
+
+    try {
+        const response = await fetch(API_URL);
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
+
+        const data = await response.json();
+        return data; // { page, results: [...], total_pages, total_results }
+    } catch (error) {
+        console.error("Error fetching favorites:", error);
+        throw error;
+    }
+}

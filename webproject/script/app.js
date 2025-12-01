@@ -7,11 +7,13 @@ import {
     createRequestToken,
     createSession,
     getAccountDetails,
-    markAsFavorite
+    markAsFavorite,
+    getFavorites
 } from './api.js';
 
 import {
     displayMovies,
+    displayMoviesGrid,
     displayHeroCarousel,
     setupTopBarScroll,
     initializeSwiper,
@@ -31,7 +33,10 @@ const state = {
         sessionId: null,
         accountId: null,
         isAuthenticated: false,
+        username: null,
+        avatarUrl: null,
     },
+    favoriteMovies: [],
     favorites: new Set(),
 }
 
@@ -46,6 +51,8 @@ function loadAuthFromStorage() {
         if (parsed && parsed.sessionId && parsed.accountId) {
             state.auth.sessionId = parsed.sessionId;
             state.auth.accountId = parsed.accountId;
+            state.auth.username = parsed.username || null;
+            state.auth.avatarUrl = parsed.avatarUrl || null;
             state.auth.isAuthenticated = true;
         }
     } catch (e) {
@@ -58,6 +65,8 @@ function saveAuthToStorage() {
         const data = {
             sessionId: state.auth.sessionId,
             accountId: state.auth.accountId,
+            username: state.auth.username,
+            avatarUrl: state.auth.avatarUrl,
         };
         localStorage.setItem(AUTH_STORAGE_KEY, JSON.stringify(data));
     } catch (e) {
@@ -96,17 +105,157 @@ function saveFavoritesToStorage() {
 }
 
 function updateAuthUI() {
-    const loginBtn = document.getElementById('login-button');
-    const logoutBtn = document.getElementById('logout-button');
-
-    if (!loginBtn || !logoutBtn) return;
+    const accountArea = document.getElementById('account-area');
+    if (!accountArea) return;
 
     if (state.auth.isAuthenticated) {
-        loginBtn.style.display = 'none';
-        logoutBtn.style.display = 'inline-flex';
+        const username = state.auth.username || 'User';
+        const avatarUrl = state.auth.avatarUrl || '';
+        const fallbackInitial = username.charAt(0).toUpperCase() || 'U';
+
+        accountArea.innerHTML = `
+            <div class="profile-dropdown-wrapper">
+                <button class="profile-chip" id="profile-dropdown-trigger" aria-expanded="false">
+                    ${avatarUrl
+                        ? `<img src="${avatarUrl}" alt="${username}" class="profile-avatar" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';" />`
+                        : ''
+                    }
+                    <div class="profile-avatar-fallback"${avatarUrl ? ' style="display:none;"' : ''}>
+                        <span>${fallbackInitial}</span>
+                    </div>
+                    <span class="profile-name">${username}</span>
+                    <i class="fa-solid fa-chevron-down profile-dropdown-arrow"></i>
+                </button>
+                <div class="profile-dropdown-menu" id="profile-dropdown-menu">
+                    <a href="favorites.html" class="profile-dropdown-item">
+                        <i class="fa-solid fa-heart"></i>
+                        <span>Favorite Movies</span>
+                    </a>
+                    <button class="profile-dropdown-item profile-dropdown-logout" id="header-logout-button">
+                        <i class="fa-solid fa-sign-out-alt"></i>
+                        <span>Log out</span>
+                    </button>
+                </div>
+            </div>
+        `;
+
+        setupProfileDropdown();
     } else {
-        loginBtn.style.display = 'inline-flex';
-        logoutBtn.style.display = 'none';
+        // Show default profile icon
+        accountArea.innerHTML = `
+            <div class="profile-dropdown-wrapper">
+                <button class="profile-chip profile-chip-default" id="default-profile-button" aria-expanded="false">
+                    <div class="profile-avatar-fallback">
+                        <i class="fa-solid fa-user"></i>
+                    </div>
+                    <i class="fa-solid fa-chevron-down profile-dropdown-arrow"></i>
+                </button>
+                <div class="profile-dropdown-menu" id="default-dropdown-menu">
+                    <button class="profile-dropdown-item" id="join-zmovie-button">
+                        <i class="fa-solid fa-user-plus"></i>
+                        <span>Join Z-Movie</span>
+                    </button>
+                </div>
+            </div>
+        `;
+
+        setupDefaultProfileDropdown();
+    }
+}
+
+function setupProfileDropdown() {
+    const trigger = document.getElementById('profile-dropdown-trigger');
+    const menu = document.getElementById('profile-dropdown-menu');
+    const logoutBtn = document.getElementById('header-logout-button');
+
+    if (!trigger || !menu) return;
+
+    let isOpen = false;
+
+    const toggleDropdown = (e) => {
+        e.stopPropagation();
+        isOpen = !isOpen;
+        menu.style.display = isOpen ? 'block' : 'none';
+        trigger.setAttribute('aria-expanded', isOpen);
+        trigger.classList.toggle('active', isOpen);
+    };
+
+    trigger.addEventListener('click', toggleDropdown);
+    
+    // Also show on hover
+    trigger.addEventListener('mouseenter', () => {
+        if (!isOpen) {
+            isOpen = true;
+            menu.style.display = 'block';
+            trigger.setAttribute('aria-expanded', 'true');
+            trigger.classList.add('active');
+        }
+    });
+
+    // Close when clicking outside
+    document.addEventListener('click', (e) => {
+        if (!trigger.contains(e.target) && !menu.contains(e.target)) {
+            isOpen = false;
+            menu.style.display = 'none';
+            trigger.setAttribute('aria-expanded', 'false');
+            trigger.classList.remove('active');
+        }
+    });
+
+    // Logout handler
+    if (logoutBtn) {
+        logoutBtn.addEventListener('click', (e) => {
+            e.preventDefault();
+            handleLogout();
+        });
+    }
+}
+
+function setupDefaultProfileDropdown() {
+    const trigger = document.getElementById('default-profile-button');
+    const menu = document.getElementById('default-dropdown-menu');
+    const joinBtn = document.getElementById('join-zmovie-button');
+
+    if (!trigger || !menu) return;
+
+    let isOpen = false;
+
+    const toggleDropdown = (e) => {
+        e.stopPropagation();
+        isOpen = !isOpen;
+        menu.style.display = isOpen ? 'block' : 'none';
+        trigger.setAttribute('aria-expanded', isOpen);
+        trigger.classList.toggle('active', isOpen);
+    };
+
+    trigger.addEventListener('click', toggleDropdown);
+    
+    // Also show on hover
+    trigger.addEventListener('mouseenter', () => {
+        if (!isOpen) {
+            isOpen = true;
+            menu.style.display = 'block';
+            trigger.setAttribute('aria-expanded', 'true');
+            trigger.classList.add('active');
+        }
+    });
+
+    // Close when clicking outside
+    document.addEventListener('click', (e) => {
+        if (!trigger.contains(e.target) && !menu.contains(e.target)) {
+            isOpen = false;
+            menu.style.display = 'none';
+            trigger.setAttribute('aria-expanded', 'false');
+            trigger.classList.remove('active');
+        }
+    });
+
+    // Join button handler
+    if (joinBtn) {
+        joinBtn.addEventListener('click', (e) => {
+            e.preventDefault();
+            handleLogin();
+        });
     }
 }
 
@@ -126,8 +275,25 @@ async function handleAuthCallback() {
 
         state.auth.sessionId = sessionId;
         state.auth.accountId = account.id;
+        state.auth.username = account.username || account.name || null;
+        // Build avatar URL if available
+        let avatarUrl = null;
+        if (account.avatar) {
+            if (account.avatar.tmdb && account.avatar.tmdb.avatar_path) {
+                avatarUrl = `https://image.tmdb.org/t/p/w45${account.avatar.tmdb.avatar_path}`;
+            } else if (account.avatar.gravatar && account.avatar.gravatar.hash) {
+                avatarUrl = `https://www.gravatar.com/avatar/${account.avatar.gravatar.hash}`;
+            }
+        }
+        state.auth.avatarUrl = avatarUrl;
         state.auth.isAuthenticated = true;
         saveAuthToStorage();
+
+        // Load favorites from TMDB
+        await loadFavoritesFromTMDB();
+        
+        // Update UI
+        updateAuthUI();
 
         // Clean up URL
         params.delete('request_token');
@@ -156,35 +322,66 @@ async function handleLogin() {
 function handleLogout() {
     state.auth.sessionId = null;
     state.auth.accountId = null;
+    state.auth.username = null;
+    state.auth.avatarUrl = null;
     state.auth.isAuthenticated = false;
     state.favorites.clear();
+    state.favoriteMovies = [];
     clearAuthStorage();
     saveFavoritesToStorage();
     updateAuthUI();
-    // Reload to clear favorite UI state
-    window.location.reload();
+    // Redirect to home screen
+    window.location.href = 'index.html';
 }
 
-function setupAuth() {
+async function setupAuth() {
     loadAuthFromStorage();
     loadFavoritesFromStorage();
+    
+    // If authenticated, try to refresh favorites from TMDB
+    if (state.auth.isAuthenticated) {
+        await loadFavoritesFromTMDB();
+    }
+    
     updateAuthUI();
+}
 
-    const loginBtn = document.getElementById('login-button');
-    const logoutBtn = document.getElementById('logout-button');
-
-    if (loginBtn) {
-        loginBtn.addEventListener('click', (e) => {
-            e.preventDefault();
-            handleLogin();
-        });
+async function loadFavoritesFromTMDB() {
+    if (!state.auth.isAuthenticated || !state.auth.sessionId || !state.auth.accountId) {
+        return;
     }
 
-    if (logoutBtn) {
-        logoutBtn.addEventListener('click', (e) => {
-            e.preventDefault();
-            handleLogout();
+    try {
+        // Load all pages of favorites
+        let page = 1;
+        let allFavorites = [];
+        let hasMore = true;
+
+        while (hasMore) {
+            const data = await getFavorites(state.auth.accountId, state.auth.sessionId, page);
+            if (data && data.results && Array.isArray(data.results)) {
+                allFavorites = allFavorites.concat(data.results);
+                hasMore = page < data.total_pages;
+                page++;
+            } else {
+                hasMore = false;
+            }
+        }
+
+        // Update state with favorite movie IDs and full movie objects
+        state.favorites.clear();
+        state.favoriteMovies = allFavorites;
+        allFavorites.forEach(movie => {
+            if (movie && movie.id) {
+                state.favorites.add(movie.id);
+            }
         });
+
+        saveFavoritesToStorage();
+        console.log(`Loaded ${state.favorites.size} favorites from TMDB`);
+    } catch (error) {
+        console.error('Error loading favorites from TMDB:', error);
+        // Don't throw - just use localStorage favorites as fallback
     }
 }
 
@@ -323,7 +520,10 @@ async function loadMovieDetailPage(movieId) {
     try {
         const movie = await getMovieDetail(movieId);
         state.currentMovie = movie;
-        displayMovieDetail(movie);
+        displayMovieDetail(movie, {
+            favorites: state.favorites,
+            isAuthenticated: state.auth.isAuthenticated,
+        });
         // Wait for cast to render, then set up scroll buttons
         await new Promise(resolve => setTimeout(resolve, 300));
         setUpMovieScrollButton();
@@ -569,11 +769,202 @@ async function handleFullSearch(query) {
     }
 }
 
+async function loadFavoritesPage() {
+    const favoriteListId = 'favorite-movie-list';
+    const favoriteContainer = document.getElementById(favoriteListId);
+
+    if (!favoriteContainer) return;
+
+    if (!state.auth.isAuthenticated) {
+        favoriteContainer.innerHTML = '<p class="text-center text-muted px-3">Please log in to view your favorite movies.</p>';
+        return;
+    }
+
+    try {
+        // Load favorites from TMDB if not already loaded
+        if (state.favoriteMovies.length === 0) {
+            await loadFavoritesFromTMDB();
+        }
+
+        if (state.favoriteMovies && state.favoriteMovies.length > 0) {
+            displayMovies(state.favoriteMovies, favoriteListId, {
+                favorites: state.favorites,
+                isAuthenticated: state.auth.isAuthenticated,
+            });
+            setTimeout(() => {
+                setUpMovieScrollButton();
+            }, 300);
+        } else {
+            favoriteContainer.innerHTML = '<p class="text-center text-muted px-3">No favorite movies yet. Add some from the home page!</p>';
+        }
+    } catch (error) {
+        console.error('Error loading favorites page:', error);
+        favoriteContainer.innerHTML = '<p class="text-center text-danger px-3">Error loading favorite movies. Please try again later.</p>';
+    }
+}
+
+async function loadMoviesPage() {
+    const params = new URLSearchParams(window.location.search);
+    const type = params.get('type') || 'popular';
+    const page = parseInt(params.get('page')) || 1;
+
+    const titleEl = document.getElementById('movies-page-title');
+    const moviesGrid = document.getElementById('movies-grid');
+    const paginationEl = document.getElementById('pagination');
+
+    if (!moviesGrid) return;
+
+    // Set title based on type
+    const titles = {
+        'popular': 'Popular Movies',
+        'top-rated': 'Top-rated Movies',
+        'upcoming': 'Upcoming Movies'
+    };
+    if (titleEl) {
+        titleEl.textContent = titles[type] || 'Movies';
+    }
+
+    moviesGrid.innerHTML = `
+        <div class="col-12">
+            <div class="loading-state">
+                <div class="spinner-border text-primary" role="status" style="width: 3rem; height: 3rem;">
+                    <span class="visually-hidden">Loading...</span>
+                </div>
+                <p class="mt-3 text-muted">Loading movies...</p>
+            </div>
+        </div>
+    `;
+    if (paginationEl) paginationEl.innerHTML = '';
+
+    try {
+        let data;
+        switch (type) {
+            case 'popular':
+                data = await getPopularMovies(page);
+                break;
+            case 'top-rated':
+                data = await getTopRatedMovies(page);
+                break;
+            case 'upcoming':
+                data = await getUpcomingMovies(page);
+                break;
+            default:
+                data = await getPopularMovies(page);
+        }
+
+        if (data && data.results && data.results.length > 0) {
+            displayMoviesGrid(data.results, 'movies-grid', {
+                favorites: state.favorites,
+                isAuthenticated: state.auth.isAuthenticated,
+            });
+
+            // Render pagination - use total_pages from API response, max 500
+            const totalPages = Math.min(500, data.total_pages || 1);
+            if (paginationEl && totalPages > 1) {
+                renderPagination(paginationEl, page, totalPages, type);
+            } else if (paginationEl) {
+                paginationEl.innerHTML = '';
+            }
+        } else {
+            moviesGrid.innerHTML = `
+                <div class="col-12">
+                    <div class="empty-state">
+                        <i class="fa-solid fa-film" style="font-size: 4rem; color: var(--color-text-secondary); margin-bottom: 1rem;"></i>
+                        <p class="text-muted">No movies found.</p>
+                    </div>
+                </div>
+            `;
+        }
+    } catch (error) {
+        console.error('Error loading movies page:', error);
+        moviesGrid.innerHTML = `
+            <div class="col-12">
+                <div class="error-state">
+                    <i class="fa-solid fa-exclamation-triangle" style="font-size: 4rem; color: #dc3545; margin-bottom: 1rem;"></i>
+                    <p class="text-danger">Error loading movies. Please try again later.</p>
+                </div>
+            </div>
+        `;
+    }
+}
+
+function renderPagination(container, currentPage, totalPages, type) {
+    container.innerHTML = '';
+
+    // Ensure totalPages is a valid number, max 500
+    totalPages = Math.min(500, Math.max(1, parseInt(totalPages) || 1));
+    currentPage = Math.max(1, Math.min(currentPage, totalPages));
+
+    // Previous button
+    const prevLi = document.createElement('li');
+    prevLi.className = `page-item ${currentPage === 1 ? 'disabled' : ''}`;
+    prevLi.innerHTML = `
+        <a class="page-link" href="movies.html?type=${type}&page=${currentPage - 1}" ${currentPage === 1 ? 'tabindex="-1" aria-disabled="true"' : ''}>
+            <i class="fa-solid fa-chevron-left"></i>
+        </a>
+    `;
+    container.appendChild(prevLi);
+
+    // Page numbers
+    const maxVisible = 5;
+    let startPage = Math.max(1, currentPage - Math.floor(maxVisible / 2));
+    let endPage = Math.min(totalPages, startPage + maxVisible - 1);
+
+    if (endPage - startPage < maxVisible - 1) {
+        startPage = Math.max(1, endPage - maxVisible + 1);
+    }
+
+    if (startPage > 1) {
+        const firstLi = document.createElement('li');
+        firstLi.className = 'page-item';
+        firstLi.innerHTML = `<a class="page-link" href="movies.html?type=${type}&page=1">1</a>`;
+        container.appendChild(firstLi);
+
+        if (startPage > 2) {
+            const ellipsisLi = document.createElement('li');
+            ellipsisLi.className = 'page-item disabled';
+            ellipsisLi.innerHTML = '<span class="page-link">...</span>';
+            container.appendChild(ellipsisLi);
+        }
+    }
+
+    for (let i = startPage; i <= endPage; i++) {
+        const li = document.createElement('li');
+        li.className = `page-item ${i === currentPage ? 'active' : ''}`;
+        li.innerHTML = `<a class="page-link" href="movies.html?type=${type}&page=${i}">${i}</a>`;
+        container.appendChild(li);
+    }
+
+    if (endPage < totalPages) {
+        if (endPage < totalPages - 1) {
+            const ellipsisLi = document.createElement('li');
+            ellipsisLi.className = 'page-item disabled';
+            ellipsisLi.innerHTML = '<span class="page-link">...</span>';
+            container.appendChild(ellipsisLi);
+        }
+
+        const lastLi = document.createElement('li');
+        lastLi.className = 'page-item';
+        lastLi.innerHTML = `<a class="page-link" href="movies.html?type=${type}&page=${totalPages}">${totalPages}</a>`;
+        container.appendChild(lastLi);
+    }
+
+    // Next button
+    const nextLi = document.createElement('li');
+    nextLi.className = `page-item ${currentPage === totalPages ? 'disabled' : ''}`;
+    nextLi.innerHTML = `
+        <a class="page-link" href="movies.html?type=${type}&page=${currentPage + 1}" ${currentPage === totalPages ? 'tabindex="-1" aria-disabled="true"' : ''}>
+            <i class="fa-solid fa-chevron-right"></i>
+        </a>
+    `;
+    container.appendChild(nextLi);
+}
+
 document.addEventListener("DOMContentLoaded", async () => {
     setupTopBarScroll();
 
     await handleAuthCallback();
-    setupAuth();
+    await setupAuth();
     setupFavoriteHandlers();
 
     const path = window.location.pathname;
@@ -582,6 +973,10 @@ document.addEventListener("DOMContentLoaded", async () => {
 
     if (path.includes('detail.html') && params.has('id')) {
         loadMovieDetailPage(movieId);
+    } else if (path.includes('favorites.html')) {
+        loadFavoritesPage();
+    } else if (path.includes('movies.html')) {
+        loadMoviesPage();
     } else {
         loadHomePage();
         setupNavigationScroll();

@@ -37,8 +37,7 @@
                         </div>
                     </div>
                 </div>
-                <button id="login-button" class="auth-button">Login</button>
-                <button id="logout-button" class="auth-button" style="display: none;">Logout</button>
+                <div id="account-area"></div>
             </div>
         </div>
     </header>
@@ -55,8 +54,9 @@
 
         
         <div class="movie-viewport" id="popular-section">
-            <div class="container section-title">
+            <div class="container section-title d-flex justify-content-between align-items-center">
                 <h4>Popular Movies</h4>
+                <a href="movies.html?type=popular" class="view-all-btn">View All →</a>
             </div>
             
             <div class="container-fluid px-0 overflow-hidden">
@@ -69,8 +69,9 @@
         </div>
 
         <div class="movie-viewport" id="top-rated-section">
-            <div class="container section-title">
+            <div class="container section-title d-flex justify-content-between align-items-center">
                 <h4>Top-rated Movies</h4>
+                <a href="movies.html?type=top-rated" class="view-all-btn">View All →</a>
             </div>
             
             <div class="container-fluid px-0 overflow-hidden">
@@ -83,8 +84,9 @@
         </div>
 
         <div class="movie-viewport" id="upcoming-section">
-            <div class="container section-title">
-                <h4>Upcoming Moives</h4>
+            <div class="container section-title d-flex justify-content-between align-items-center">
+                <h4>Upcoming Movies</h4>
+                <a href="movies.html?type=upcoming" class="view-all-btn">View All →</a>
             </div>
             
             <div class="container-fluid px-0 overflow-hidden">

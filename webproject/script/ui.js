@@ -1,3 +1,49 @@
+export function displayMoviesGrid(movies, targetId, options = {}) {
+  const movieGrid = document.getElementById(targetId);
+
+  if (!movieGrid) {
+    console.error(`Error: Element with ID "${targetId}" not found.`);
+    return;
+  }
+
+  movieGrid.innerHTML = "";
+
+  const {
+    favorites = new Set(),
+    isAuthenticated = false,
+  } = options;
+
+  movies.forEach((movie) => {
+    const col = document.createElement("div");
+    col.className = "col-6 col-md-4 col-lg-3 col-xl-2";
+
+    const rating = typeof movie.vote_average === "number"
+      ? movie.vote_average.toFixed(1)
+      : "N/A";
+
+    const poster = movie.poster_path
+      ? `https://image.tmdb.org/t/p/w500${movie.poster_path}`
+      : "https://via.placeholder.com/500x750?text=No+Image";
+
+    col.innerHTML = `
+    <a href="detail.html?id=${movie.id}" style="text-decoration: none; color: inherit;">
+      <div class="movie-card-grid">
+        <img src="${poster}" 
+             class="movie-poster-grid" 
+             alt="${movie.title}"
+             onerror="this.src='https://via.placeholder.com/500x750?text=No+Image'">
+        <div class="movie-card-info">
+          <h6 class="movie-title-grid">${movie.title}</h6>
+          <p class="movie-rating-grid">${rating}</p>
+        </div> 
+      </div>
+    </a>
+  `;
+
+    movieGrid.appendChild(col);
+  });
+}
+
 export function displayMovies(movies, targetId, options = {}) {
   const movieList = document.getElementById(targetId);
 
@@ -27,29 +73,20 @@ export function displayMovies(movies, targetId, options = {}) {
       ? movie.vote_average.toFixed(1)
       : "N/A";
 
-    const isFavorite = favorites.has(movie.id);
+    const poster = movie.poster_path
+      ? `https://image.tmdb.org/t/p/w500${movie.poster_path}`
+      : "https://via.placeholder.com/500x750?text=No+Image";
 
     col.innerHTML = `
     <a href="detail.html?id=${movie.id}" style="text-decoration: none; color: inherit;">
       <div>
-        <img src="https://image.tmdb.org/t/p/w500${movie.poster_path}" 
+        <img src="${poster}" 
              class="card-img-top movie-poster" 
-             alt="${movie.title}">
+             alt="${movie.title}"
+             onerror="this.src='https://via.placeholder.com/500x750?text=No+Image'">
         <div class="pt-2">
           <h6 class="card-title movie-title text-truncate">${movie.title}</h6>
-          <p class="card-text movie-rating">
-            ⭐ Rating: ${rating}
-            <button
-              type="button"
-              class="favorite-btn ${isFavorite ? "active" : ""}"
-              data-favorite-btn="true"
-              data-movie-id="${movie.id}"
-              ${isAuthenticated ? "" : 'data-requires-auth="true"'}
-              aria-label="${isFavorite ? "Remove from favorites" : "Add to favorites"}"
-            >
-              ${isFavorite ? "♥" : "♡"}
-            </button>
-          </p>
+          <p class="card-text movie-rating">⭐ Rating: ${rating}</p>
         </div> 
       </div>
     </a>
@@ -122,9 +159,9 @@ export function displayHeroCarousel(movies) {
 
   let allSlidesHTML = '';
   top10Movies.forEach(movie => {
-    if (!movie.backdrop_path) return;
-
-    const backdropUrl = `https://image.tmdb.org/t/p/original${movie.backdrop_path}`;
+    const backdropUrl = movie.backdrop_path
+      ? `https://image.tmdb.org/t/p/original${movie.backdrop_path}`
+      : "https://via.placeholder.com/1920x1080?text=No+Image";
 
     // HTML structure for one slide
     allSlidesHTML += `
@@ -343,7 +380,7 @@ export function setUpMovieScrollButton() {
   }, 300);
 }
 
-export function displayMovieDetail(movie) {
+export function displayMovieDetail(movie, options = {}) {
   const detailContainer = document.getElementById("movie-detail");
   const backdropContainer = document.getElementById("movie-backdrop");
   const castContainer = document.getElementById("cast");
@@ -353,13 +390,20 @@ export function displayMovieDetail(movie) {
   const castMembers = allCastMembers.slice(0, 10);
   const hasMoreCast = allCastMembers.length > 10;
 
+  const {
+    favorites = new Set(),
+    isAuthenticated = false,
+  } = options;
+
   // Set backdrop image if available
-  if (backdropContainer && movie.backdrop_path) {
-    const backdropUrl = `https://image.tmdb.org/t/p/original${movie.backdrop_path}`;
-    backdropContainer.style.backgroundImage = `url('${backdropUrl}')`;
-  } else if (backdropContainer) {
-    // Fallback if no backdrop
-    backdropContainer.style.backgroundImage = `linear-gradient(135deg, var(--color-bg-primary) 0%, var(--color-bg-secondary) 100%)`;
+  if (backdropContainer) {
+    if (movie.backdrop_path) {
+      const backdropUrl = `https://image.tmdb.org/t/p/original${movie.backdrop_path}`;
+      backdropContainer.style.backgroundImage = `url('${backdropUrl}')`;
+    } else {
+      // Fallback if no backdrop - use placeholder
+      backdropContainer.style.backgroundImage = `url('https://via.placeholder.com/1920x1080?text=No+Image'), linear-gradient(135deg, var(--color-bg-primary) 0%, var(--color-bg-secondary) 100%)`;
+    }
   }
 
   // Check if poster exists
@@ -372,6 +416,8 @@ export function displayMovieDetail(movie) {
     ? movie.vote_average.toFixed(1)
     : "N/A";
 
+  const isFavorite = favorites.has(movie.id);
+
   // Render movie details
   detailContainer.innerHTML = `
     <div class="row">
@@ -379,20 +425,26 @@ export function displayMovieDetail(movie) {
         <img src="${poster}" class="img-fluid rounded shadow-sm" alt="${movie.title}">
       </div>
       <div class="col-md-8">
-        <h2>${movie.title}</h2>
-        <p>
-          ${movie.release_date} &bull; ⭐ ${rating}
+        <div class="d-flex align-items-center justify-content-between mb-3">
+          <div>
+            <h2 class="mb-2">${movie.title}</h2>
+            <p class="mb-1">${movie.release_date} &bull; ⭐ ${rating}</p>
+            <p class="mb-0">${movie.genres.map((g) => g.name).join(", ")}</p>
+          </div>
+          ${isAuthenticated ? `
           <button
             type="button"
-            class="favorite-btn"
+            class="favorite-btn-detail ${isFavorite ? "active" : ""}"
             data-favorite-btn="true"
             data-movie-id="${movie.id}"
-            aria-label="Add to favorites"
+            aria-label="${isFavorite ? "Remove from favorites" : "Add to favorites"}"
+            title="${isFavorite ? "Remove from favorites" : "Add to favorites"}"
           >
-            ♡
+            <i class="fa-solid fa-heart"></i>
+            <span>${isFavorite ? "Favorited" : "Add to Favorites"}</span>
           </button>
-        </p>
-        <p>${movie.genres.map((g) => g.name).join(", ")}</p>
+          ` : ''}
+        </div>
         <p>${movie.overview}</p>
       </div>
     </div>
@@ -417,14 +469,15 @@ export function displayMovieDetail(movie) {
 
     const avatar = member.profile_path
       ? `https://image.tmdb.org/t/p/w185${member.profile_path}`
-      : "https://via.placeholder.com/138x175?text=No+Image";
+      : "https://via.placeholder.com/185x278?text=No+Image";
     const character = member.character || "Unknown role";
     
     col.innerHTML = `
       <div class="cast-card-body">
         <img src="${avatar}" 
              class="cast-card-poster" 
-             alt="${member.name}">
+             alt="${member.name}"
+             onerror="this.src='https://via.placeholder.com/185x278?text=No+Image'">
         <div class="cast-card-info">
           <h6 class="cast-card-title">${member.name}</h6>
           <p class="cast-card-role">${character}</p>

@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Movie Details</title>
+  <title>Favorite Movies</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;700&display=swap" rel="stylesheet">
@@ -28,19 +28,21 @@
   </header>
 
   <main>
-    <section class="movie-detail-backdrop" id="movie-backdrop">
-    </section>
-    <div class="container movie-detail-content" id="movie-detail">
-      <p>Loading movie details...</p>
-    </div>
-      <div class="container"><h4 class="cast-section-title">Top Billed Cast</h4></div>
-      <div class="container-fluid px-0 overflow-hidden movie-list-wrapper">
-        <div class="position-relative">
-            <div class="row g-3 py-3 flex-nowrap overflow-auto" id="cast"></div>
-            <button type="button" class="scroll-btn scroll-btn-left">&lt;</button>
-            <button type="button" class="scroll-btn scroll-btn-right">&gt;</button>
+    <div class="movie-viewport" style="padding-top: 100px;">
+        <div class="container section-title">
+            <h4>Your Favorite Movies</h4>
         </div>
-      </div>
+        
+        <div class="container-fluid px-0 overflow-hidden">
+            <div class="movie-list-wrapper position-relative">
+                <div class="row g-3 py-3 flex-nowrap overflow-auto" id="favorite-movie-list">
+                    <p class="text-center text-muted px-3">Loading your favorite movies...</p>
+                </div>
+                <button type="button" class="scroll-btn scroll-btn-left">&lt;</button>
+                <button type="button" class="scroll-btn scroll-btn-right">&gt;</button>
+            </div>
+        </div>
+    </div>
   </main>
 
   <footer class="text-white text-center py-3 mt-5">
@@ -51,3 +53,4 @@
   <script type="module" src="./script/app.js"></script>
 </body>
 </html>
+
