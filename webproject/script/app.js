@@ -263,19 +263,64 @@ async function handleAuthCallback() {
     const params = new URLSearchParams(window.location.search);
     const requestToken = params.get('request_token');
     const approved = params.get('approved');
+    const denied = params.get('denied');
 
-    if (!requestToken || approved !== 'true') {
+    // Log for debugging
+    console.log('Auth callback - requestToken:', requestToken, 'approved:', approved, 'denied:', denied);
+
+    // Check if user denied access
+    if (denied === 'true' || denied === true) {
+        console.log('User denied authentication');
+        alert('Authentication was cancelled. Please try again if you want to log in.');
+        // Clean up URL
+        params.delete('request_token');
+        params.delete('approved');
+        params.delete('denied');
+        const newQuery = params.toString();
+        const newUrl = window.location.pathname + (newQuery ? `?${newQuery}` : '');
+        window.history.replaceState({}, '', newUrl);
         return;
     }
 
+    // Check if we have a request token and approval
+    if (!requestToken) {
+        console.log('No request token found in URL');
+        return;
+    }
+
+    // More flexible approved check (handle both string 'true' and boolean true)
+    const isApproved = approved === 'true' || approved === true || approved === '1';
+    if (!isApproved) {
+        console.log('Authentication not approved. approved value:', approved);
+        return;
+    }
+
+    console.log('Processing authentication callback...');
+
     try {
+        console.log('Creating session with request token...');
         const sessionData = await createSession(requestToken);
+        
+        if (!sessionData || !sessionData.session_id) {
+            throw new Error('Failed to create session: No session ID returned');
+        }
+        
         const sessionId = sessionData.session_id;
+        console.log('Session created successfully. Session ID:', sessionId);
+
+        console.log('Fetching account details...');
         const account = await getAccountDetails(sessionId);
+        
+        if (!account || !account.id) {
+            throw new Error('Failed to get account details: No account ID returned');
+        }
+        
+        console.log('Account details fetched. Account ID:', account.id, 'Username:', account.username || account.name);
 
         state.auth.sessionId = sessionId;
         state.auth.accountId = account.id;
         state.auth.username = account.username || account.name || null;
+        
         // Build avatar URL if available
         let avatarUrl = null;
         if (account.avatar) {
@@ -287,35 +332,69 @@ async function handleAuthCallback() {
         }
         state.auth.avatarUrl = avatarUrl;
         state.auth.isAuthenticated = true;
+        
+        console.log('Saving authentication to storage...');
         saveAuthToStorage();
+        console.log('Authentication saved successfully');
 
         // Load favorites from TMDB
+        console.log('Loading favorites from TMDB...');
         await loadFavoritesFromTMDB();
         
         // Update UI
+        console.log('Updating UI...');
         updateAuthUI();
+        console.log('Authentication complete! User logged in as:', state.auth.username);
 
         // Clean up URL
         params.delete('request_token');
         params.delete('approved');
+        params.delete('denied');
         const newQuery = params.toString();
         const newUrl = window.location.pathname + (newQuery ? `?${newQuery}` : '');
         window.history.replaceState({}, '', newUrl);
+        
+        // Show success message
+        console.log('Login successful!');
     } catch (error) {
         console.error('Error handling auth callback:', error);
+        alert('Failed to complete login. Error: ' + (error.message || 'Unknown error') + '\n\nPlease try logging in again.');
+        
+        // Clean up URL even on error
+        params.delete('request_token');
+        params.delete('approved');
+        params.delete('denied');
+        const newQuery = params.toString();
+        const newUrl = window.location.pathname + (newQuery ? `?${newQuery}` : '');
+        window.history.replaceState({}, '', newUrl);
     }
 }
 
 async function handleLogin() {
     try {
+        console.log('Starting login process...');
         const data = await createRequestToken();
+        
+        if (!data || !data.request_token) {
+            throw new Error('Failed to get request token from TMDB');
+        }
+        
         const requestToken = data.request_token;
-        const redirectTo = encodeURIComponent(window.location.href);
+        console.log('Request token obtained:', requestToken);
+        
+        // Use clean redirect URL (just the origin + pathname, no query params)
+        // This ensures TMDB redirects back cleanly
+        const currentUrl = window.location.origin + window.location.pathname;
+        const redirectTo = encodeURIComponent(currentUrl);
+        console.log('Redirect URL:', currentUrl);
+        
         const authUrl = `https://www.themoviedb.org/authenticate/${requestToken}?redirect_to=${redirectTo}`;
+        console.log('Redirecting to TMDB authentication:', authUrl);
+        
         window.location.href = authUrl;
     } catch (error) {
         console.error('Login failed:', error);
-        alert('Could not start TMDB login. Please try again.');
+        alert('Could not start TMDB login. Error: ' + (error.message || 'Unknown error') + '\n\nPlease try again.');
     }
 }
 
@@ -963,8 +1042,21 @@ function renderPagination(container, currentPage, totalPages, type) {
 document.addEventListener("DOMContentLoaded", async () => {
     setupTopBarScroll();
 
+    // Handle authentication callback first (if returning from TMDB)
+    const wasAuthenticated = state.auth.isAuthenticated;
     await handleAuthCallback();
+    const justAuthenticated = state.auth.isAuthenticated && !wasAuthenticated;
+    
+    // Setup auth (loads from storage if not just authenticated)
+    // If we just authenticated, handleAuthCallback already saved to storage
     await setupAuth();
+    
+    // If we just authenticated, ensure UI is updated
+    if (justAuthenticated) {
+        console.log('Just authenticated, ensuring UI is updated...');
+        updateAuthUI();
+    }
+    
     setupFavoriteHandlers();
 
     const path = window.location.pathname;
